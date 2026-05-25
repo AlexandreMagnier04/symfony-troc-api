@@ -57,6 +57,12 @@ php bin/console doctrine:database:create
 php bin/console doctrine:migrations:migrate --no-interaction
 ```
 
+**3. Lancer le serveur de développement Symfony :**
+
+```bash
+symfony serve
+```
+
 ### Injection des Données de Test (Fixtures)
 
 Pour charger immédiatement le jeu de données complet et valider l'API, exécutez :
