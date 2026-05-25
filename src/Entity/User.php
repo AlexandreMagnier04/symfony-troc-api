@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -14,22 +16,46 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    # id de l'utilisateur
     private ?int $id = null;
 
     #[ORM\Column(length: 180)]
+    # email de l'utilisateur 
     private ?string $email = null;
 
     /**
      * @var list<string> The user roles
      */
     #[ORM\Column]
+    # rôles de l'utilisateur
     private array $roles = [];
 
     /**
      * @var string The hashed password
      */
     #[ORM\Column]
+    # mot de passe de l'utilisateur (haché)
     private ?string $password = null;
+
+    /**
+     * @var Collection<int, Offer>
+     */
+    #[ORM\OneToMany(targetEntity: Offer::class, mappedBy: 'owner')]
+    # offres créées par cet utilisateur
+    private Collection $offers;
+
+    /**
+     * @var Collection<int, TrocProposal>
+     */
+    #[ORM\OneToMany(targetEntity: TrocProposal::class, mappedBy: 'requester')]
+    # propositions de troc faites par cet utilisateur
+    private Collection $trocProposals;
+
+    public function __construct()
+    {
+        $this->offers = new ArrayCollection();
+        $this->trocProposals = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -101,7 +127,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function __serialize(): array
     {
         $data = (array) $this;
-        $data["\0".self::class."\0password"] = hash('crc32c', $this->password);
+        $data["\0" . self::class . "\0password"] = hash('crc32c', $this->password);
 
         return $data;
     }
@@ -110,5 +136,65 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function eraseCredentials(): void
     {
         // @deprecated, to be removed when upgrading to Symfony 8
+    }
+
+    /**
+     * @return Collection<int, Offer>
+     */
+    public function getOffers(): Collection
+    {
+        return $this->offers;
+    }
+
+    public function addOffer(Offer $offer): static
+    {
+        if (!$this->offers->contains($offer)) {
+            $this->offers->add($offer);
+            $offer->setOwner($this);
+        }
+
+        return $this;
+    }
+
+    public function removeOffer(Offer $offer): static
+    {
+        if ($this->offers->removeElement($offer)) {
+            // set the owning side to null (unless already changed)
+            if ($offer->getOwner() === $this) {
+                $offer->setOwner(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, TrocProposal>
+     */
+    public function getTrocProposals(): Collection
+    {
+        return $this->trocProposals;
+    }
+
+    public function addTrocProposal(TrocProposal $trocProposal): static
+    {
+        if (!$this->trocProposals->contains($trocProposal)) {
+            $this->trocProposals->add($trocProposal);
+            $trocProposal->setRequester($this);
+        }
+
+        return $this;
+    }
+
+    public function removeTrocProposal(TrocProposal $trocProposal): static
+    {
+        if ($this->trocProposals->removeElement($trocProposal)) {
+            // set the owning side to null (unless already changed)
+            if ($trocProposal->getRequester() === $this) {
+                $trocProposal->setRequester(null);
+            }
+        }
+
+        return $this;
     }
 }
