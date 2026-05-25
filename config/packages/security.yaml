@@ -30,15 +30,22 @@ security:
             jwt: ~
 
     access_control:
-        - { path: ^/api/login, roles: PUBLIC_ACCESS }
+        # 1. Routes publiques
         - { path: ^/api/register, roles: PUBLIC_ACCESS }
+        - { path: ^/api/login, roles: PUBLIC_ACCESS }
+        - { path: ^/api/offers$, methods: [GET], roles: PUBLIC_ACCESS }
+
+        # 2. Toutes les routes réservées aux admins
+        - { path: ^/api/admin, roles: ROLE_ADMIN }
+
+        # 3. Routes réservées aux utilisateurs authentifiés
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
 
-          # activate different ways to authenticate
-          # https://symfony.com/doc/current/security.html#the-firewall
+        # activate different ways to authenticate
+        # https://symfony.com/doc/current/security.html#the-firewall
 
-          # https://symfony.com/doc/current/security/impersonating_user.html
-          # switch_user: true
+        # https://symfony.com/doc/current/security/impersonating_user.html
+        # switch_user: true
 
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
