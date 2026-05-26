@@ -82,6 +82,7 @@ class AppFixtures extends Fixture
         // Julie (User B) propose son VTT (offer3) contre la PS4 de Alex (offer1)
         $proposal = new TrocProposal();
         $proposal->setRequester($userB);
+        $proposal->setOfferer($userA);
         $proposal->setRequestedItem($offer1);
         $proposal->setOfferedItem($offer3);
         $proposal->setStatus('pending');

@@ -37,6 +37,10 @@ class TrocProposal
     # objet proposé dans le troc
     private ?Offer $offeredItem = null;
 
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?User $offerer = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -98,6 +102,18 @@ class TrocProposal
     public function setOfferedItem(?Offer $offeredItem): static
     {
         $this->offeredItem = $offeredItem;
+
+        return $this;
+    }
+
+    public function getOfferer(): ?User
+    {
+        return $this->offerer;
+    }
+
+    public function setOfferer(?User $offerer): static
+    {
+        $this->offerer = $offerer;
 
         return $this;
     }

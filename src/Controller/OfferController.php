@@ -2,8 +2,7 @@
 
 namespace App\Controller;
 
-use App\Entity\Offer;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Service\OfferService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -11,47 +10,31 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class OfferController extends AbstractController
 {
-    #[Route('/api/offers', name: 'app_offer_create', methods: ['POST'])]
-    public function create(Request $request, EntityManagerInterface $em): JsonResponse
-    {
-        // 1. Récupérer l'utilisateur grâce au Token JWT
-        $user = $this->getUser();
+    public function __construct(
+        private OfferService $offerService,
+    ) {}
 
-        // 2. Décoder le JSON reçu
+    #[Route('/api/offers', name: 'app_offer_create', methods: ['POST'])]
+    public function create(Request $request): JsonResponse
+    {
         $data = json_decode($request->getContent(), true);
 
-        // 3. Créer l'entité et remplir les données
-        $offer = new Offer();
-        $offer->setTitle($data['title']);
-        $offer->setDescription($data['description']);
-        $offer->setStatus('available'); // État par défaut
-        $offer->setOwner($user); // On lie l'annonce à l'utilisateur connecté
+        $offer = $this->offerService->createOffer($data['title'], $data['description'], $this->getUser());
 
-        // 4. Sauvegarder en base de données
-        $em->persist($offer);
-        $em->flush();
-
-        return new JsonResponse([
-            'message' => 'Annonce créée avec succès !',
-            'id' => $offer->getId()
-        ], 201);
+        return new JsonResponse(['message' => 'Annonce créée avec succès !', 'id' => $offer->getId()], 201);
     }
 
     #[Route('/api/offers', name: 'app_offers_list', methods: ['GET'])]
-    public function list(EntityManagerInterface $em): JsonResponse
+    public function list(): JsonResponse
     {
-        // On récupère uniquement les annonces "disponibles"
-        $offers = $em->getRepository(Offer::class)->findBy(['status' => 'available']);
+        $offers = $this->offerService->getAvailableOffers();
 
-        $results = [];
-        foreach ($offers as $offer) {
-            $results[] = [
-                'id' => $offer->getId(),
-                'title' => $offer->getTitle(),
-                'description' => $offer->getDescription(),
-                'owner' => $offer->getOwner()->getEmail(), // On affiche l'email du proprio
-            ];
-        }
+        $results = array_map(fn($offer) => [
+            'id' => $offer->getId(),
+            'title' => $offer->getTitle(),
+            'description' => $offer->getDescription(),
+            'owner' => $offer->getOwner()->getEmail(),
+        ], $offers);
 
         return new JsonResponse($results);
     }

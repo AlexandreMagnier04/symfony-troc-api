@@ -86,7 +86,7 @@ php bin/console doctrine:fixtures:load --no-interaction
 | Scénario de Test                         | Route                         | Token            | Statut attendu   | Résultat attendu             |
 | ---------------------------------------- | ----------------------------- | ---------------- | ---------------- | ---------------------------- |
 | Création anonyme d'une offre             | `POST /api/offers`            | Aucun            | 401 Unauthorized | Bloqué par le Pare-feu JWT   |
-| Acceptation d'un troc par un tiers       | `PATCH /api/trades/1/respond` | Token de Julie   | 403 Forbidden    | Bloqué par le Contrôleur     |
+| Acceptation d'un troc par un tiers       | `PATCH /api/proposals/1/respond` | Token de Julie   | 403 Forbidden    | Bloqué par le Contrôleur     |
 | Suppression d'offre par un User standard | `DELETE /api/admin/offers/1`  | Token d'Alex     | 403 Forbidden    | Bloqué par l'Access Control  |
 | Suppression d'offre par un Admin         | `DELETE /api/admin/offers/1`  | Token de l'Admin | 200 OK           | Succès (Nettoyage PHP + SQL) |
 
@@ -115,7 +115,7 @@ php bin/console doctrine:fixtures:load --no-interaction
 
 > ⚠️ Au moment de la proposition de troc, il faut bien renseigner l'ID de l'offre demandée **et** l'ID de ce qu'on propose en échange.
 
-1. Créez une requête `POST` sur `http://localhost:8000/api/trades`.
+1. Créez une requête `POST` sur `http://localhost:8000/api/proposals`.
 2. Vérifiez que le **Bearer Token de Julie** est bien configuré dans l'onglet **Authorization**.
 3. Dans le **Body** (`raw`, `JSON`), liez les deux offres par leur ID :
 
@@ -126,8 +126,10 @@ php bin/console doctrine:fixtures:load --no-interaction
 }
 ```
 
-- `"requested_id": 1` → la PS4 d'Alex
-- `"offered_id": 3` → le VTT de Julie
+- `"requested_id"` → ID de l'offre que **vous voulez obtenir** (l'objet appartenant à l'autre personne). Ici : la PS4 d'Alex (ID 1).
+- `"offered_id"` → ID de l'offre que **vous proposez en échange** (votre propre objet). Ici : le VTT de Julie (ID 3).
+
+> L'API vérifie que l'offre renseignée dans `offered_id` vous appartient bien. Si ce n'est pas le cas, elle retourne une erreur **403 Forbidden**.
 
 4. Envoyez la requête. L'API répond **201 Created**. Notez l'ID de la proposition de troc renvoyé dans la réponse (ex. : `ID = 1`).
 
@@ -140,7 +142,7 @@ php bin/console doctrine:fixtures:load --no-interaction
 1. Faites un `POST /api/login` avec `alex@test.fr` / `password123` pour obtenir le token d'Alex.
 2. Créez une nouvelle requête de méthode `PATCH`.
 3. **URL dynamique :** remplacez `{id}` par l'ID du troc.  
-   Exemple : `http://localhost:8000/api/trades/1/respond`
+   Exemple : `http://localhost:8000/api/proposals/1/respond`
 4. Dans l'onglet **Authorization**, appliquez le **Bearer Token d'Alex**.
 5. Dans le **Body** (`raw`, `JSON`), envoyez la décision :
 
